@@ -116,7 +116,7 @@
             background-color: #000000;
         }
 
-        /* 🌟 โค้ดกล่องข้อความแจ้งเตือน (Popup Custom) อันใหม่แบบไม่มีชื่อเว็บกวนใจ */
+        /* 🌟 โค้ดกล่องข้อความแจ้งเตือน (Popup Custom) ดีไซน์ใหม่สะอาดตา */
         .custom-alert-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -247,13 +247,11 @@
         }
     }
 
-    // ฟังก์ชันสั่งเปิดกล่องแจ้งเตือนสวยๆ
     function showCustomAlert(message) {
         document.getElementById('customAlertMsg').innerHTML = message;
         document.getElementById('customAlert').classList.add('show');
     }
 
-    // ฟังก์ชันสั่งปิดกล่องและเคลียร์ค่าในฟอร์ม
     function closeCustomAlert() {
         document.getElementById('customAlert').classList.remove('show');
         document.getElementById('issueForm').reset(); 
@@ -273,7 +271,7 @@
             phone: document.getElementById('phone').value.trim(),
             category: document.getElementById('category').value,
             targetHouse: document.getElementById('targetHouse').value.trim(),
-            issue: document.getElementById('issue).value.trim(),
+            issue: document.getElementById('issue').value.trim(), // ✨ ซ่อมตัวแปรตรงนี้แล้วครับ
             details: document.getElementById('details').value.trim()
         };
 
