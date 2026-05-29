@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบแจ้งปัญหา</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .form-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 450px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+        .form-group {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #555;
+            font-weight: bold;
+        }
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        textarea {
+            resize: vertical;
+            height: 100px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .message {
+            margin-top: 15px;
+            text-align: center;
+            font-weight: bold;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+<div class="form-container">
+    <h2>📝 ฟอร์มแจ้งปัญหา</h2>
+    <form id="reportForm">
+        <div class="form-group">
+            <label for="houseNumber">1. บ้านเลขที่:</label>
+            <input type="text" id="houseNumber" required placeholder="ตัวอย่าง: 123/45">
+        </div>
+
+        <div class="form-group">
+            <label for="name">2. ชื่อผู้แจ้ง:</label>
+            <input type="text" id="name" required placeholder="กรุณากรอกชื่อ-นามสกุล">
+        </div>
+        
+        <div class="form-group">
+            <label for="issue">4. ปัญหาที่พบ:</label>
+            <input type="text" id="issue" required placeholder="ตัวอย่าง: ท่อน้ำอุดตัน, ไฟทางดับ">
+        </div>
+        
+        <div class="form-group">
+            <label for="details">5. รายละเอียดเพิ่มเติม:</label>
+            <textarea id="details" required placeholder="อธิบายรายละเอียดปัญหา..."></textarea>
+        </div>
+        
+        <button type="submit" id="submitBtn">ส่งข้อมูล</button>
+    </form>
+    <div id="responseMessage" class="message"></div>
+</div>
+
+<script>
+    // ⚠️ วาง URL เว็บแอปของคุณที่ได้จากขั้นตอนที่ 2 ตรงนี้
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbxmefUil3YGRZUM9gKRPGY4yB8k8xwC0HeS7aWArasUUhezcRF_-fj1y27v__DggRMl/exec";
+
+    document.getElementById('reportForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const responseMessage = document.getElementById('responseMessage');
+        
+        submitBtn.disabled = true;
+        submitBtn.innerText = "กำลังส่งข้อมูล...";
+        responseMessage.style.display = "none";
+
+        const formData = {
+            houseNumber: document.getElementById('houseNumber').value,
+            name: document.getElementById('name').value,
+            issue: document.getElementById('issue').value,
+            details: document.getElementById('details').value
+        };
+
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(() => {
+            responseMessage.innerText = "🎉 บันทึกข้อมูลแจ้งปัญหาเรียบร้อยแล้ว!";
+            responseMessage.style.color = "green";
+            responseMessage.style.display = "block";
+            document.getElementById('reportForm').reset();
+        })
+        .catch(error => {
+            responseMessage.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
+            responseMessage.style.color = "red";
+            responseMessage.style.display = "block";
+            console.error('Error:', error);
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "ส่งข้อมูล";
+        });
+    });
+</script>
+
+</body>
+</html>
