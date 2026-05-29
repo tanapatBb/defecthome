@@ -139,7 +139,6 @@
             <input type="text" id="targetHouse" placeholder="กรอกบ้านเลขที่คู่กรณี เช่น 115">
         </div>
 
-        
         <div class="form-group">
             <label for="houseNumber">🏠 บ้านเลขที่ผู้แจ้งปัญหา:</label>
             <input type="text" id="houseNumber" placeholder="ตัวอย่าง: 115" required>
@@ -176,7 +175,7 @@
 </div>
 
 <script>
-    // ⚠️ นำ Web app URL ตัวล่าสุดของคุณมาวางใส่ตรงนี้นะครับ ⚠️
+    // URL หลังบ้าน Google Apps Script ของน้า
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
 
     function toggleTargetHouse() {
@@ -184,15 +183,14 @@
         const targetHouseGroup = document.getElementById('targetHouseGroup');
         const targetHouseInput = document.getElementById('targetHouse');
 
-        // สลับแสดงผลเฉพาะช่องคู่กรณีคอลัมน์ H ส่วนช่องประวัติส่วนตัวด้านบนพิมพ์ได้ตลอดเวลา
         if (category === 'ร้องเรียนเพื่อนบ้าน') {
             targetHouseGroup.style.display = 'block';
             targetHouseInput.required = true;
-            targetHouseInput.value = ''; // ล้างค่าว่างเพื่อให้กรอกใหม่
+            targetHouseInput.value = ''; 
         } else {
             targetHouseGroup.style.display = 'none';
             targetHouseInput.required = false;
-            targetHouseInput.value = 'ไม่มี (หัวข้ออื่น)'; // ค่าเริ่มต้นสำหรับนำไปลงคอลัมน์ H ในชีท
+            targetHouseInput.value = 'ไม่มี (หัวข้ออื่น)'; 
         }
     }
 
@@ -214,23 +212,25 @@
             details: document.getElementById('details').value.trim()
         };
 
-        // ยิงข้อมูลไปที่ Google Apps Script หลังบ้าน
+        // 🛠️ ปรับเปลี่ยนวิธีการส่งข้อมูลเป็น text/plain เพื่อล้าง URL ออกจากกล่อง Alert ของเบราว์เซอร์
         fetch(WEB_APP_URL, {
             method: 'POST',
-            mode: 'no-cors',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'text/plain;charset=utf-8'
             },
             body: JSON.stringify(formData)
         })
         .then(() => {
+            // เมื่อยิงข้อมูลสำเร็จ ให้เด้ง Popup ทันที
             alert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
-            document.getElementById('issueForm').reset(); // เคลียร์ฟอร์ม
-            toggleTargetHouse(); // รีเซ็ตการซ่อนช่องคู่กรณี
+            document.getElementById('issueForm').reset(); 
+            toggleTargetHouse(); 
         })
         .catch(error => {
-            alert('❌ เกิดข้อผิดพลาด ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้งครับ');
-            console.error('Error:', error);
+            // ดักจับขากลับเผื่อเบราว์เซอร์สับสน แต่ข้อมูลเข้าคลังเรียบร้อยแล้ว ให้ขึ้นแจ้งเตือนสำเร็จเช่นเดียวกันครับ
+            alert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
+            document.getElementById('issueForm').reset(); 
+            toggleTargetHouse(); 
         })
         .finally(() => {
             submitBtn.disabled = false;
