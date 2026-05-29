@@ -115,6 +115,53 @@
         .btn-admin:hover {
             background-color: #000000;
         }
+
+        /* 🌟 โค้ดกล่องข้อความแจ้งเตือน (Popup Custom) อันใหม่แบบไม่มีชื่อเว็บกวนใจ */
+        .custom-alert-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+        .custom-alert-overlay.show {
+            opacity: 1; pointer-events: auto;
+        }
+        .custom-alert-box {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            width: 85%;
+            max-width: 340px;
+            box-sizing: border-box;
+        }
+        .custom-alert-msg {
+            font-size: 16px;
+            color: #333;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        .custom-alert-btn {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            width: auto;
+            display: inline-block;
+        }
+        .custom-alert-btn:hover {
+            background-color: #0056b3;
+        }
     </style>
 </head>
 <body>
@@ -174,8 +221,14 @@
     <a href="admin.html" class="btn-admin">🔐 สำหรับเจ้าหน้าที่ (Admin)</a>
 </div>
 
+<div id="customAlert" class="custom-alert-overlay">
+    <div class="custom-alert-box">
+        <div class="custom-alert-msg" id="customAlertMsg">🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ</div>
+        <button class="custom-alert-btn" onclick="closeCustomAlert()">ตกลง</button>
+    </div>
+</div>
+
 <script>
-    // URL หลังบ้าน Google Apps Script ของน้า
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
 
     function toggleTargetHouse() {
@@ -194,6 +247,19 @@
         }
     }
 
+    // ฟังก์ชันสั่งเปิดกล่องแจ้งเตือนสวยๆ
+    function showCustomAlert(message) {
+        document.getElementById('customAlertMsg').innerHTML = message;
+        document.getElementById('customAlert').classList.add('show');
+    }
+
+    // ฟังก์ชันสั่งปิดกล่องและเคลียร์ค่าในฟอร์ม
+    function closeCustomAlert() {
+        document.getElementById('customAlert').classList.remove('show');
+        document.getElementById('issueForm').reset(); 
+        toggleTargetHouse(); 
+    }
+
     function submitForm(event) {
         event.preventDefault();
         
@@ -201,18 +267,16 @@
         submitBtn.disabled = true;
         submitBtn.innerText = "กำลังส่งข้อมูล...";
 
-        // รวบรวมข้อมูลจากฟอร์ม
         const formData = {
             houseNumber: document.getElementById('houseNumber').value.trim(),
             name: document.getElementById('name').value.trim(),
             phone: document.getElementById('phone').value.trim(),
             category: document.getElementById('category').value,
             targetHouse: document.getElementById('targetHouse').value.trim(),
-            issue: document.getElementById('issue').value.trim(),
+            issue: document.getElementById('issue).value.trim(),
             details: document.getElementById('details').value.trim()
         };
 
-        // 🛠️ ปรับเปลี่ยนวิธีการส่งข้อมูลเป็น text/plain เพื่อล้าง URL ออกจากกล่อง Alert ของเบราว์เซอร์
         fetch(WEB_APP_URL, {
             method: 'POST',
             headers: {
@@ -221,16 +285,10 @@
             body: JSON.stringify(formData)
         })
         .then(() => {
-            // เมื่อยิงข้อมูลสำเร็จ ให้เด้ง Popup ทันที
-            alert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
-            document.getElementById('issueForm').reset(); 
-            toggleTargetHouse(); 
+            showCustomAlert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
         })
         .catch(error => {
-            // ดักจับขากลับเผื่อเบราว์เซอร์สับสน แต่ข้อมูลเข้าคลังเรียบร้อยแล้ว ให้ขึ้นแจ้งเตือนสำเร็จเช่นเดียวกันครับ
-            alert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
-            document.getElementById('issueForm').reset(); 
-            toggleTargetHouse(); 
+            showCustomAlert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
         })
         .finally(() => {
             submitBtn.disabled = false;
