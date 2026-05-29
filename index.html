@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ระบบแจ้งปัญหา</title>
+    <title>ระบบแจ้งปัญหาโครงการเดอะโมดิช</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -21,44 +21,36 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 450px;
+            max-width: 500px;
+            box-sizing: border-box;
         }
         h2 {
             margin-top: 0;
             color: #333;
             text-align: center;
-            margin-bottom: 24px;
+            margin-bottom: 20px;
         }
         .form-group {
-            margin-bottom: 18px;
-        }
-        /* สำหรับซ่อนช่องแปลงที่เกิดปัญหาเริ่มต้น */
-        .hidden-group {
-            display: none; 
-            background-color: #fff3cd;
-            padding: 15px;
-            border-radius: 8px;
-            border-left: 5px solid #ffc107;
+            margin-bottom: 15px;
         }
         label {
             display: block;
-            margin-bottom: 6px;
-            color: #555;
+            margin-bottom: 5px;
             font-weight: bold;
+            color: #495057;
         }
-        input[type="text"], input[type="tel"], textarea, select {
+        input[type="text"], input[type="tel"], select, textarea {
             width: 100%;
             padding: 10px;
-            border: 1px solid #ccc;
+            border: 1px solid #ced4da;
             border-radius: 6px;
+            font-size: 15px;
             box-sizing: border-box;
-            font-size: 14px;
-            transition: all 0.2s;
         }
-        input:disabled, select:disabled {
-            background-color: #e9ecef;
-            cursor: not-allowed;
-            color: #6c757d;
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
         }
         textarea {
             resize: vertical;
@@ -72,26 +64,21 @@
             border: none;
             border-radius: 6px;
             font-size: 16px;
-            cursor: pointer;
             font-weight: bold;
-            transition: background 0.2s;
+            cursor: pointer;
+            transition: background-color 0.2s;
         }
         button:hover {
             background-color: #0056b3;
         }
         button:disabled {
-            background-color: #ccc;
-        }
-        .message {
-            margin-top: 15px;
-            text-align: center;
-            font-weight: bold;
-            display: none;
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
         .divider {
             margin: 25px 0 20px 0;
             border: 0;
-            border-top: 1px solid #e0e0e0;
+            border-top: 1px solid #dee2e6;
         }
         .btn-track {
             display: block;
@@ -99,138 +86,135 @@
             text-decoration: none;
             width: 100%;
             padding: 12px;
-            background-color: #6c757d;
+            background-color: #28a745;
             color: white;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             box-sizing: border-box;
-            transition: background 0.2s;
+            transition: background-color 0.2s;
         }
         .btn-track:hover {
-            background-color: #5a6268;
+            background-color: #218838;
+        }
+        .btn-admin {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            width: 100%;
+            padding: 10px;
+            background-color: #212529;
+            color: white;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: bold;
+            box-sizing: border-box;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+        .btn-admin:hover {
+            background-color: #000000;
         }
     </style>
 </head>
 <body>
 
 <div class="form-container">
-    <h2>📝 ฟอร์มแจ้งปัญหาใหม่</h2>
-    <form id="reportForm">
+    <h2>📝 ฟอร์มแจ้งปัญหาออนไลน์</h2>
+    
+    <form id="issueForm" onsubmit="submitForm(event)">
         
         <div class="form-group">
-            <label for="category">1. กรุณาเลือกหัวข้อ:</label>
-            <select id="category" required oninvalid="this.setCustomValidity('โปรดเลือกหัวข้อปัญหาจากรายการ')" oninput="this.setCustomValidity('')" onchange="checkCategory(this.value)">
-                <option value="">-- เลือกหัวข้อ --</option>
+            <label for="category">📁 หัวข้อปัญหาที่ต้องการแจ้ง:</label>
+            <select id="category" onchange="toggleTargetHouse()" required>
+                <option value="" disabled selected>-- เลือกหัวข้อปัญหา --</option>
                 <option value="ปัญหาบ้าน">ปัญหาบ้าน</option>
                 <option value="ปัญหาส่วนกลาง">ปัญหาส่วนกลาง</option>
                 <option value="ร้องเรียนเพื่อนบ้าน">ร้องเรียนเพื่อนบ้าน</option>
             </select>
         </div>
 
-        <div class="form-group hidden-group" id="targetHouseGroup">
-            <label for="targetHouse" style="color: #856404;">📍 แปลงที่เกิดปัญหา (บ้านคู่กรณี):</label>
-            <input type="text" id="targetHouse" oninvalid="this.setCustomValidity('กรุณาระบุแปลงหรือบ้านเลขที่คู่กรณีด้วยครับ')" oninput="this.setCustomValidity('')" placeholder="ตัวอย่าง: แปลงมุมซ้าย, บ้านเลขที่ 99/9">
+        <div class="form-group" id="targetHouseGroup" style="display: none;">
+            <label for="targetHouse">🏘️ ระบุแปลง/บ้านเลขที่คู่กรณี:</label>
+            <input type="text" id="targetHouse" placeholder="กรอกบ้านเลขที่คู่กรณี เช่น 115">
         </div>
 
-        <div class="form-group">
-            <label for="houseNumber">2. บ้านเลขที่:</label>
-            <input type="text" id="houseNumber" required oninvalid="this.setCustomValidity('กรุณากรอกบ้านเลขที่ด้วยครับ')" oninput="this.setCustomValidity('')" placeholder="ตัวอย่าง: 123/45">
-        </div>
-
-        <div class="form-group">
-            <label for="name">3. ชื่อผู้แจ้ง:</label>
-            <input type="text" id="name" required oninvalid="this.setCustomValidity('กรุณากรอกชื่อ-นามสกุลของคุณ')" oninput="this.setCustomValidity('')" placeholder="กรุณากรอกชื่อ-นามสกุล">
-        </div>
-
-        <div class="form-group">
-            <label for="phone">4. เบอร์โทร:</label>
-            <input type="tel" id="phone" required oninvalid="this.setCustomValidity('กรุณากรอกเบอร์โทรศัพท์ที่ติดต่อได้')" oninput="this.setCustomValidity('')" placeholder="ตัวอย่าง: 0812345678" pattern="[0-9]{9,10}">
-        </div>
-
-        <div class="form-group">
-            <label for="issue">5. ปัญหาที่พบ:</label>
-            <input type="text" id="issue" required oninvalid="this.setCustomValidity('กรุณาระบุปัญหาที่พบ')" oninput="this.setCustomValidity('')" placeholder="ตัวอย่าง: ท่อน้ำอุดตัน, หลังคารั่ว, เสียงดัง">
-        </div>
         
         <div class="form-group">
-            <label for="details">6. รายละเอียดเพิ่มเติม:</label>
-            <textarea id="details" required oninvalid="this.setCustomValidity('กรุณาใส่รายละเอียดของปัญหาเพิ่มเติม')" oninput="this.setCustomValidity('')" placeholder="อธิบายรายละเอียดปัญหาอย่างละเอียด..."></textarea>
+            <label for="houseNumber">🏠 บ้านเลขที่ผู้แจ้งปัญหา:</label>
+            <input type="text" id="houseNumber" placeholder="ตัวอย่าง: 115" required>
         </div>
-        
+
+        <div class="form-group">
+            <label for="name">👤 ชื่อผู้แจ้งปัญหา:</label>
+            <input type="text" id="name" placeholder="กรอกชื่อ-นามสกุลของคุณ" required>
+        </div>
+
+        <div class="form-group">
+            <label for="phone">📞 เบอร์โทรศัพท์ติดต่อ:</label>
+            <input type="tel" id="phone" placeholder="ตัวอย่าง: 08XXXXXXXX" required>
+        </div>
+
+        <div class="form-group">
+            <label for="issue">📌 ปัญหาที่พบ:</label>
+            <input type="text" id="issue" placeholder="เช่น ท่อแตก, ไฟดับ, เสียงดัง" required>
+        </div>
+
+        <div class="form-group">
+            <label for="details">🔍 รายละเอียดเพิ่มเติม:</label>
+            <textarea id="details" placeholder="อธิบายรายละเอียดความเสียหาย หรือเวลาที่เกิดปัญหา..."></textarea>
+        </div>
+
         <button type="submit" id="submitBtn">ส่งข้อมูลแจ้งปัญหา</button>
     </form>
-    
-    <div id="responseMessage" class="message"></div>
 
     <hr class="divider">
 
-    <a href="https://docs.google.com/spreadsheets/d/1uBkWQnWXEenaDnVZwBV3stMh0ZClkSbAykXnX9_J2I0/edit?usp=sharing" target="_blank" class="btn-track">🔍 ติดตามปัญหา</a>
+    <a href="track.html" class="btn-track">🔍 ติดตามและเช็กสถานะปัญหา</a>
+
+    <a href="admin.html" class="btn-admin">🔐 สำหรับเจ้าหน้าที่ (Admin)</a>
 </div>
 
 <script>
-    // ฟังก์ชันควบคุมการซ่อน/แสดงช่อง และปิดการใช้งานช่องกรอกข้อมูล
-    function checkCategory(value) {
-        const houseNumber = document.getElementById('houseNumber');
-        const name = document.getElementById('name');
-        const phone = document.getElementById('phone');
+    // ⚠️ นำ Web app URL ตัวล่าสุดของคุณมาวางใส่ตรงนี้นะครับ ⚠️
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
+
+    function toggleTargetHouse() {
+        const category = document.getElementById('category').value;
         const targetHouseGroup = document.getElementById('targetHouseGroup');
-        const targetHouse = document.getElementById('targetHouse');
+        const targetHouseInput = document.getElementById('targetHouse');
 
-        if (value === 'ร้องเรียนเพื่อนบ้าน') {
-            // 1. แสดงช่อง "แปลงที่เกิดปัญหา" และตั้งค่าให้จำเป็นต้องกรอก (Required)
+        // สลับแสดงผลเฉพาะช่องคู่กรณีคอลัมน์ H ส่วนช่องประวัติส่วนตัวด้านบนพิมพ์ได้ตลอดเวลา
+        if (category === 'ร้องเรียนเพื่อนบ้าน') {
             targetHouseGroup.style.display = 'block';
-            targetHouse.setAttribute('required', '');
-
-            // 2. ปิดการใช้งานช่องข้อมูลส่วนตัว (Disable) และล้างค่าออก
-            houseNumber.disabled = true;
-            name.disabled = true;
-            phone.disabled = true;
-            houseNumber.value = '';
-            name.value = '';
-            phone.value = '';
-            houseNumber.removeAttribute('required');
-            name.removeAttribute('required');
-            phone.removeAttribute('required');
+            targetHouseInput.required = true;
+            targetHouseInput.value = ''; // ล้างค่าว่างเพื่อให้กรอกใหม่
         } else {
-            // 1. ซ่อนช่อง "แปลงที่เกิดปัญหา" และล้างค่าออก
             targetHouseGroup.style.display = 'none';
-            targetHouse.removeAttribute('required');
-            targetHouse.value = '';
-
-            // 2. เปิดการใช้งานช่องข้อมูลส่วนตัวตามปกติ
-            houseNumber.disabled = false;
-            name.disabled = false;
-            phone.disabled = false;
-            houseNumber.setAttribute('required', '');
-            name.setAttribute('required', '');
-            phone.setAttribute('required', '');
+            targetHouseInput.required = false;
+            targetHouseInput.value = 'ไม่มี (หัวข้ออื่น)'; // ค่าเริ่มต้นสำหรับนำไปลงคอลัมน์ H ในชีท
         }
     }
 
-    // ⚠️ วาง URL เว็บแอปตัวปัจจุบันของคุณตรงนี้ครับ
-    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbykrzuE7eI1DpO5V51fuZxnEpCz8kl7qFdzpaH6FW8WSS9c2ESnGWsiPQo8YXLtqk-C/exec";
-
-    document.getElementById('reportForm').addEventListener('submit', function(e) {
-        e.preventDefault();
+    function submitForm(event) {
+        event.preventDefault();
         
         const submitBtn = document.getElementById('submitBtn');
-        const responseMessage = document.getElementById('responseMessage');
-        
         submitBtn.disabled = true;
         submitBtn.innerText = "กำลังส่งข้อมูล...";
-        responseMessage.style.display = "none";
 
+        // รวบรวมข้อมูลจากฟอร์ม
         const formData = {
+            houseNumber: document.getElementById('houseNumber').value.trim(),
+            name: document.getElementById('name').value.trim(),
+            phone: document.getElementById('phone').value.trim(),
             category: document.getElementById('category').value,
-            houseNumber: document.getElementById('houseNumber').value || "ไม่ระบุ (ร้องเรียนเพื่อนบ้าน)",
-            name: document.getElementById('name').value || "ไม่ระบุ (ร้องเรียนเพื่อนบ้าน)",
-            phone: document.getElementById('phone').value || "ไม่ระบุ (ร้องเรียนเพื่อนบ้าน)",
-            issue: document.getElementById('issue').value,
-            details: document.getElementById('details').value,
-            targetHouse: document.getElementById('targetHouse').value || "ไม่มี (หัวข้ออื่น)"
+            targetHouse: document.getElementById('targetHouse').value.trim(),
+            issue: document.getElementById('issue').value.trim(),
+            details: document.getElementById('details').value.trim()
         };
 
+        // ยิงข้อมูลไปที่ Google Apps Script หลังบ้าน
         fetch(WEB_APP_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -240,23 +224,19 @@
             body: JSON.stringify(formData)
         })
         .then(() => {
-            responseMessage.innerText = "🎉 บันทึกข้อมูลแจ้งปัญหาเรียบร้อยแล้ว!";
-            responseMessage.style.color = "green";
-            responseMessage.style.display = "block";
-            document.getElementById('reportForm').reset();
-            checkCategory(''); // รีเซ็ตการแสดงผลของฟอร์มกลับมาเริ่มต้น
+            alert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
+            document.getElementById('issueForm').reset(); // เคลียร์ฟอร์ม
+            toggleTargetHouse(); // รีเซ็ตการซ่อนช่องคู่กรณี
         })
         .catch(error => {
-            responseMessage.innerText = "❌ เกิดข้อผิดพลาด กรุณาลองใหม่อีกครั้ง";
-            responseMessage.style.color = "red";
-            responseMessage.style.display = "block";
+            alert('❌ เกิดข้อผิดพลาด ไม่สามารถส่งข้อมูลได้ กรุณาลองใหม่อีกครั้งครับ');
             console.error('Error:', error);
         })
         .finally(() => {
             submitBtn.disabled = false;
             submitBtn.innerText = "ส่งข้อมูลแจ้งปัญหา";
         });
-    });
+    }
 </script>
 
 </body>

@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เช็กสถานะการแจ้งปัญหา</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .track-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 550px;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .search-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+        button {
+            padding: 12px 20px;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .result-item {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 5px solid #007bff;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            color: #6c757d;
+            margin-bottom: 8px;
+        }
+        .issue-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        /* 🎨 ปรับแต่งสี Badge */
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .status-empty { background-color: #e2e3e5; color: #383d41; }    /* กรณีช่องสถานะว่าง (สีเทา) */
+        .status-blue { background-color: #cfe2ff; color: #084298; }     /* รับเรื่อง (สีฟ้าอ่อน) */
+        .status-yellow { background-color: #fff3cd; color: #664d03; }   /* กำลังดำเนินการ (สีเหลืองอ่อน) */
+        .status-green { background-color: #d1e7dd; color: #0f5132; }    /* เรียบร้อย (สีเขียวอ่อน) */
+        .status-red { background-color: #f8d7da; color: #842029; }      /* ไม่สามารถแก้ไขได้ (สีแดงอ่อน) */
+        
+        .note-box {
+            margin-top: 10px;
+            background-color: #ffffff;
+            border: 1px dashed #ffc107;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #555;
+        }
+        .no-data {
+            text-align: center;
+            color: #6c757d;
+            padding: 20px;
+        }
+        .btn-back {
+            display: block;
+            text-align: center;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+            margin-top: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="track-container">
+    <h2>🔍 ตรวจสอบสถานะปัญหา</h2>
+    
+    <div class="search-group">
+        <input type="text" id="searchHouse" placeholder="กรอกบ้านเลขที่ของคุณ เช่น 115">
+        <button onclick="searchStatus()">ค้นหา</button>
+    </div>
+
+    <div id="loadingText" style="display:none; text-align:center; color:#6c757d; margin-bottom:15px;">กำลังค้นหาข้อมูล...</div>
+    <div id="resultContainer"></div>
+
+    <a href="index.html" class="btn-back">⬅️ กลับหน้าฟอร์มแจ้งปัญหา</a>
+</div>
+
+<script>
+    // ⚠️ นำ Web app URL ตัวล่าสุดของคุณมาใส่ตรงนี้ครับ
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
+
+    function searchStatus() {
+        const houseNum = document.getElementById('searchHouse').value.trim();
+        const container = document.getElementById('resultContainer');
+        const loading = document.getElementById('loadingText');
+        
+        if (!houseNum) {
+            alert('กรุณากรอกบ้านเลขที่ก่อนค้นหาครับ');
+            return;
+        }
+
+        loading.style.display = 'block';
+        container.innerHTML = '';
+
+        fetch(`${WEB_APP_URL}?houseNumber=${encodeURIComponent(houseNum)}`)
+        .then(response => response.json())
+        .then(data => {
+            loading.style.display = 'none';
+            
+            if (!data || data.length === 0) {
+                container.innerHTML = '<div class="no-data">❌ ไม่พบประวัติการแจ้งปัญหาของบ้านเลขที่นี้</div>';
+                return;
+            }
+
+            data.forEach(item => {
+                let displayStatus = item.status;
+                let colorClass = '';
+
+                // 🌟 เงื่อนไขเช็กค่าว่างในช่องสถานะ (คอลัมน์ I)
+                if (!displayStatus || displayStatus.toString().trim() === '') {
+                    displayStatus = '⏳ กำลังรอเจ้าหน้าที่ตรวจสอบข้อมูล';
+                    colorClass = 'status-empty';
+                } else if (displayStatus === '2.รับเรื่อง') {
+                    colorClass = 'status-blue';
+                } else if (displayStatus === '3.กำลังดำเนินการ') {
+                    colorClass = 'status-yellow';
+                } else if (displayStatus === '4.เรียบร้อย') {
+                    colorClass = 'status-green';
+                } else if (displayStatus === 'ไม่สามารถแก้ไขได้') {
+                    colorClass = 'status-red';
+                } else {
+                    colorClass = 'status-empty'; // เผื่อกรณีพิมพ์คำอื่นที่ไม่ตรงกับเงื่อนไข
+                }
+
+                let noteHtml = '';
+                if (item.note && item.note.toString().trim() !== '') {
+                    noteHtml = `<div class="note-box">📌 <b>หมายเหตุจากแอดมิน:</b> ${item.note}</div>`;
+                }
+
+                container.innerHTML += `
+                    <div class="result-item">
+                        <div class="result-header">
+                            <span>📅 วันที่แจ้ง: ${item.date}</span>
+                            <span>📁 หัวข้อ: ${item.category}</span>
+                        </div>
+                        <div class="issue-title">ปัญหา: ${item.issue}</div>
+                        <div>สถานะ: <span class="status-badge ${colorClass}">${displayStatus}</span></div>
+                        ${noteHtml}
+                    </div>
+                `;
+            });
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            container.innerHTML = '<div class="no-data" style="color:red;">❌ เกิดข้อผิดพลาดในการดึงข้อมูล</div>';
+            console.error('Error:', error);
+        });
+    }
+</script>
+
+</body>
+</html>

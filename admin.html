@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - จัดการสถานะงาน</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 20px;
+        }
+        .admin-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 100%;
+            margin: 0 auto;
+        }
+        h2 {
+            margin-top: 0;
+            color: #333;
+            text-align: center;
+        }
+        
+        /* สไตล์สำหรับโซนเครื่องมือ คัดกรอง และแบ่งหน้า */
+        .toolbar {
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #495057;
+        }
+        .toolbar select {
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid #ced4da;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        .table-responsive {
+            overflow-x: auto;
+            margin-top: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 10px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        th {
+            background-color: #212529;
+            color: white;
+            white-space: nowrap;
+        }
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        .admin-select {
+            padding: 6px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-weight: bold;
+            font-size: 13px;
+            width: 140px;
+        }
+        .admin-note-input {
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            width: 160px;
+            font-size: 13px;
+        }
+        .btn-save-row {
+            padding: 6px 12px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        .btn-save-row:hover { background-color: #0056b3; }
+
+        /* ปุ่มเปิดหน้าถัดไป/ย้อนกลับ (Pagination) */
+        .pagination-zone {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .btn-page {
+            padding: 8px 16px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .btn-page:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+        #pageInfo {
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        /* ล็อกอินคลุมหน้าจอ */
+        #loginOverlay {
+            position: fixed;
+            top:0; left:0; width:100%; height:100%;
+            background: #212529;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .login-box {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            width: 100%;
+            max-width: 320px;
+        }
+        .login-box input {
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .login-box button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            width: 100%;
+            font-size: 16px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="loginOverlay">
+    <div class="login-box">
+        <h3>🔒 แผงควบคุมเจ้าหน้าที่</h3>
+        <p>กรุณาเข้าสู่ระบบเพื่อใช้งาน</p>
+        <input type="text" id="adminUser" placeholder="ชื่อผู้ใช้งาน (Username)">
+        <input type="password" id="adminPass" placeholder="รหัสผ่าน (Password)"><br>
+        <button onclick="checkLogin()">เข้าสู่ระบบ</button>
+    </div>
+</div>
+
+<div class="admin-container" id="mainContent" style="display: none;">
+    <h2>📊 แผงจัดการรายการแจ้งปัญหา</h2>
+    
+    <div style="text-align: flex; justify-content: space-between; display: flex; margin-bottom: 15px;">
+        <a href="index.html" style="text-decoration: none; color: #007bff; font-weight: bold; line-height: 35px;">⬅️ กลับหน้าหลัก</a>
+        <button onclick="loadAdminData()" style="padding: 8px 15px; background:#28a745; color:white; border:none; border-radius:4px; cursor:pointer; font-weight:bold;">🔄 รีเฟรชข้อมูล</button>
+    </div>
+
+    <div class="toolbar">
+        <div class="filter-group">
+            <label for="filterCategory">📁 กรองหัวข้อปัญหา:</label>
+            <select id="filterCategory" onchange="changeFilter()">
+                <option value="all">แสดงทั้งหมด</option>
+                <option value="ปัญหาบ้าน">ปัญหาบ้าน</option>
+                <option value="ปัญหาส่วนกลาง">ปัญหาส่วนกลาง</option>
+                <option value="ร้องเรียนเพื่อนบ้าน">ร้องเรียนเพื่อนบ้าน</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="sortOrder">🔄 เรียงวันที่:</label>
+            <select id="sortOrder" onchange="changeFilter()">
+                <option value="newest">ใหม่สุดไปเก่าสุด (ล่าสุดก่อน)</option>
+                <option value="oldest">เก่าสุดไปใหม่สุด (มาก่อนหลัง)</option>
+            </select>
+        </div>
+        
+        <div class="filter-group" style="margin-left: auto;">
+            <label for="rowsPerPage">📄 รายการต่อหน้า:</label>
+            <select id="rowsPerPage" onchange="changeFilter()">
+                <option value="10">10 รายการ</option>
+                <option value="30">30 รายการ</option>
+                <option value="50">50 รายการ</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="table-responsive">
+        <table>
+            <thead>
+                <tr>
+                    <th>วันที่แจ้ง</th>
+                    <th>บ้านเลขที่</th>
+                    <th>ชื่อผู้แจ้ง</th>
+                    <th>เบอร์โทร</th>
+                    <th>หัวข้อปัญหา</th>
+                    <th>ปัญหาที่พบ</th>
+                    <th>รายละเอียดเพิ่มเติม</th>
+                    <th>บ้านคู่กรณี</th>
+                    <th style="min-width: 150px;">ปรับเปลี่ยนสถานะ</th>
+                    <th>ข้อความหมายเหตุ</th>
+                    <th>จัดการ</th>
+                </tr>
+            </thead>
+            <tbody id="adminTableBody">
+                <tr>
+                    <td colspan="11" style="text-align: center; color: #6c757d;">กำลังโหลดข้อมูลจาก Google Sheet...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination-zone">
+        <button id="btnPrev" class="btn-page" onclick="prevPage()">⬅️ ก่อนหน้า</button>
+        <span id="pageInfo">หน้า 1 จาก 1</span>
+        <button id="btnNext" class="btn-page" onclick="nextPage()">ถัดไป ➡️</button>
+    </div>
+</div>
+
+<script>
+    const SECRET_USER = "admin";      
+    const SECRET_PASSWORD = "1234";  
+
+    // ⚠️ นำ Web app URL ของคุณมาใส่ตรงนี้ครับ
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
+
+    let allData = []; 
+    let currentPage = 1;
+
+    function checkLogin() {
+        const inputUser = document.getElementById('adminUser').value.trim();
+        const inputPass = document.getElementById('adminPass').value;
+        if (inputUser === SECRET_USER && inputPass === SECRET_PASSWORD) {
+            document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+            loadAdminData();
+        } else {
+            alert('❌ ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง');
+        }
+    }
+
+    function loadAdminData() {
+        const tbody = document.getElementById('adminTableBody');
+        tbody.innerHTML = '<tr><td colspan="11" style="text-align: center;">🔄 กำลังดึงข้อมูลล่าสุด...</td></tr>';
+
+        fetch(`${WEB_APP_URL}?mode=adminAll`)
+        .then(response => response.json())
+        .then(data => {
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" style="text-align: center;">📭 ยังไม่มีประวัติการแจ้งปัญหาใดๆ ในระบบ</td></tr>';
+                allData = [];
+                updatePaginationControls(0);
+                return;
+            }
+
+            allData = data; 
+            renderTable();
+        })
+        .catch(error => {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: red;">❌ เกิดข้อผิดพลาดในการเชื่อมต่อข้อมูลส่วนกลาง</td></tr>';
+            console.error('Error:', error);
+        });
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('adminTableBody');
+        const filterCategory = document.getElementById('filterCategory').value;
+        const sortOrder = document.getElementById('sortOrder').value;
+        const rowsPerPage = parseInt(document.getElementById('rowsPerPage').value);
+        
+        tbody.innerHTML = '';
+
+        // 1. คัดกรองตาม "หัวข้อปัญหา" ที่แอดมินเลือก
+        let filteredData = allData.filter(item => {
+            if (filterCategory === "all") return true; // ถ้าเลือกทั้งหมด ให้ผ่านหมด
+            return item.category === filterCategory;   // กรองตามคำที่ตรงกัน
+        });
+
+        // 2. จัดการเรียงลำดับ มาก่อน-มาหลัง
+        if (sortOrder === "newest") {
+            filteredData.reverse(); 
+        }
+
+        // 3. คำนวณระบบแบ่งหน้า (Pagination) จากข้อมูลที่กรองเสร็จแล้ว
+        const totalItems = filteredData.length;
+        const totalPages = Math.ceil(totalItems / rowsPerPage);
+        
+        if (currentPage > totalPages) currentPage = totalPages;
+        if (currentPage < 1) currentPage = 1;
+
+        const startIndex = (currentPage - 1) * rowsPerPage;
+        const endIndex = Math.min(startIndex + rowsPerPage, totalItems);
+
+        const pageData = filteredData.slice(startIndex, endIndex);
+
+        if (pageData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="11" style="text-align: center; color: #6c757d;">📭 ไม่พบข้อมูลที่ตรงตามเงื่อนไขตัวกรอง</td></tr>';
+            updatePaginationControls(totalPages);
+            return;
+        }
+
+        pageData.forEach((item, index) => {
+            let selectBg = "#e2e3e5";
+            if(item.status === "รับเรื่อง") selectBg = "#cfe2ff";
+            if(item.status === "กำลังดำเนินการ") selectBg = "#fff3cd";
+            if(item.status === "เรียบร้อย") selectBg = "#d1e7dd";
+            if(item.status === "ไม่สามารถแก้ไขได้") selectBg = "#f8d7da";
+
+            tbody.innerHTML += `
+                <tr>
+                    <td>${item.date}</td>
+                    <td><b>${item.houseNumber}</b></td>
+                    <td>${item.name}</td>
+                    <td><a href="tel:${item.phone}">${item.phone}</a></td>
+                    <td><mark style="background:#ffeb3b; padding:2px 5px; border-radius:3px;">${item.category}</mark></td>
+                    <td><u>${item.issue}</u></td>
+                    <td>${item.details}</td>
+                    <td style="color: #856404;">${item.targetHouse}</td>
+                    
+                    <td>
+                        <select id="status_${index}" class="admin-select" style="background-color: ${selectBg};" onchange="this.style.backgroundColor=this.options[this.selectedIndex].style.backgroundColor">
+                            <option value="" style="background-color: #e2e3e5;" ${item.status === "" ? "selected" : ""}>- ว่างเปล่า -</option>
+                            <option value="รับเรื่อง" style="background-color: #cfe2ff;" ${item.status === "รับเรื่อง" ? "selected" : ""}>รับเรื่อง</option>
+                            <option value="กำลังดำเนินการ" style="background-color: #fff3cd;" ${item.status === "กำลังดำเนินการ" ? "selected" : ""}>กำลังดำเนินการ</option>
+                            <option value="เรียบร้อย" style="background-color: #d1e7dd;" ${item.status === "เรียบร้อย" ? "selected" : ""}>เรียบร้อย</option>
+                            <option value="ไม่สามารถแก้ไขได้" style="background-color: #f8d7da;" ${item.status === "ไม่สามารถแก้ไขได้" ? "selected" : ""}>ไม่สามารถแก้ไขได้</option>
+                        </select>
+                    </td>
+                    
+                    <td>
+                        <input type="text" id="note_${index}" class="admin-note-input" value="${item.note}" placeholder="พิมพ์บันทึกข้อความ...">
+                    </td>
+                    
+                    <td>
+                        <button class="btn-save-row" id="btn_${index}" onclick="updateRowData('${item.dateId}', ${index})">บันทึก</button>
+                    </td>
+                </tr>
+            `;
+        });
+
+        updatePaginationControls(totalPages);
+    }
+
+    function updatePaginationControls(totalPages) {
+        const btnPrev = document.getElementById('btnPrev');
+        const btnNext = document.getElementById('btnNext');
+        const pageInfo = document.getElementById('pageInfo');
+
+        if (totalPages <= 1) {
+            btnPrev.disabled = true;
+            btnNext.disabled = true;
+            pageInfo.innerText = `หน้า ${currentPage} จาก ${totalPages || 1}`;
+        } else {
+            btnPrev.disabled = (currentPage === 1);
+            btnNext.disabled = (currentPage === totalPages);
+            pageInfo.innerText = `หน้า ${currentPage} จาก ${totalPages}`;
+        }
+    }
+
+    function changeFilter() {
+        currentPage = 1; // ย้ายกลับหน้าแรกเสมอกรณีตัวกรองมีการปรับ
+        renderTable();
+    }
+
+    function prevPage() {
+        if (currentPage > 1) {
+            currentPage--;
+            renderTable();
+        }
+    }
+
+    function nextPage() {
+        currentPage++;
+        renderTable();
+    }
+
+    function updateRowData(dateId, index) {
+        const statusValue = document.getElementById(`status_${index}`).value;
+        const noteValue = document.getElementById(`note_${index}`).value;
+        const btn = document.getElementById(`btn_${index}`);
+
+        btn.disabled = true;
+        btn.innerText = "กำลังเซฟ...";
+
+        const updateData = {
+            action: "updateStatus",
+            dateId: dateId,
+            status: statusValue,
+            note: noteValue
+        };
+
+        fetch(WEB_APP_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updateData)
+        })
+        .then(() => {
+            alert("🎉 อัปเดตสถานะและหมายเหตุลง Google Sheet สำเร็จแล้ว!");
+            loadAdminData(); 
+        })
+        .catch(error => {
+            alert("❌ เกิดข้อผิดพลาด ไม่สามารถส่งข้อมูลได้");
+            console.error('Error:', error);
+            btn.disabled = false;
+            btn.innerText = "บันทึก";
+        });
+    }
+
+    // ⏱️ สั่งรีเฟรชอัปเดตข้อมูลอัตโนมัติทุกๆ 10 วินาทีตามที่คุยไว้ก่อนหน้านี้
+   // setInterval(function() {
+      //  if (document.getElementById('mainContent').style.display === 'block') {
+      //      loadAdminData(); 
+     //   }
+    //}, 10000);
+//</script>
+
+</body>
+</html>
