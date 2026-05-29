@@ -5,174 +5,139 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบแจ้งปัญหาโครงการเดอะโมดิช</title>
     <style>
+        :root {
+            --primary: #1e40af;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --bg: #f8fafc;
+            --text: #334155;
+        }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
+            background-color: var(--bg);
             margin: 0;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
+            color: var(--text);
         }
         .form-container {
             background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            padding: 25px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05);
             width: 100%;
-            max-width: 500px;
+            max-width: 480px;
             box-sizing: border-box;
         }
         h2 {
             margin-top: 0;
-            color: #333;
+            color: #0f172a;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
+            font-size: 24px;
         }
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 18px;
         }
         label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #495057;
+            margin-bottom: 6px;
+            font-weight: 600;
+            color: #475569;
+            font-size: 14px;
         }
-        input[type="text"], input[type="tel"], select, textarea {
+        input, select, textarea {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ced4da;
-            border-radius: 6px;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
             font-size: 15px;
             box-sizing: border-box;
+            transition: all 0.2s;
+            background-color: #fff;
         }
         input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: #80bdff;
-            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.15);
         }
-        textarea {
-            resize: vertical;
-            height: 100px;
-        }
+        textarea { resize: vertical; height: 90px; }
+        
         button {
             width: 100%;
-            padding: 12px;
-            background-color: #007bff;
+            padding: 14px;
+            background-color: var(--primary);
             color: white;
             border: none;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
             transition: background-color 0.2s;
         }
-        button:hover {
-            background-color: #0056b3;
-        }
-        button:disabled {
-            background-color: #cccccc;
-            cursor: not-allowed;
-        }
+        button:hover { background-color: var(--primary-hover); }
+        button:disabled { background-color: #cbd5e1; cursor: not-allowed; }
+        
         .divider {
             margin: 25px 0 20px 0;
             border: 0;
-            border-top: 1px solid #dee2e6;
+            border-top: 1px solid #e2e8f0;
         }
-        .btn-track {
-            display: block;
+        .btn-navigation {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .btn-link {
             text-align: center;
             text-decoration: none;
-            width: 100%;
             padding: 12px;
-            background-color: #28a745;
             color: white;
-            border-radius: 6px;
-            font-size: 15px;
-            font-weight: bold;
-            box-sizing: border-box;
-            transition: background-color 0.2s;
-        }
-        .btn-track:hover {
-            background-color: #218838;
-        }
-        .btn-admin {
-            display: block;
-            text-align: center;
-            text-decoration: none;
-            width: 100%;
-            padding: 10px;
-            background-color: #212529;
-            color: white;
-            border-radius: 6px;
+            border-radius: 8px;
             font-size: 14px;
             font-weight: bold;
-            box-sizing: border-box;
-            margin-top: 10px;
-            transition: background-color 0.2s;
+            transition: opacity 0.2s;
         }
-        .btn-admin:hover {
-            background-color: #000000;
-        }
+        .btn-link:hover { opacity: 0.9; }
+        .btn-track { background-color: var(--success); }
+        .btn-admin { background-color: #334155; }
 
-        /* 🌟 โค้ดกล่องข้อความแจ้งเตือน (Popup Custom) ดีไซน์ใหม่สะอาดตา */
-        .custom-alert-overlay {
+        /* 🌟 แถบแจ้งเตือน Toast สวยว้าว ไร้ URL ไร้หัวปุ่ม */
+        .toast-box {
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            opacity: 0; pointer-events: none;
-            transition: opacity 0.2s ease;
-        }
-        .custom-alert-overlay.show {
-            opacity: 1; pointer-events: auto;
-        }
-        .custom-alert-box {
-            background: white;
-            padding: 30px;
-            border-radius: 16px;
-            text-align: center;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-            width: 85%;
-            max-width: 340px;
-            box-sizing: border-box;
-        }
-        .custom-alert-msg {
-            font-size: 16px;
-            color: #333;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-        .custom-alert-btn {
-            background-color: #007bff;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #0f172a;
             color: white;
-            border: none;
-            padding: 10px 30px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 8px;
-            cursor: pointer;
-            width: auto;
-            display: inline-block;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+            z-index: 99999;
+            width: 85%;
+            max-width: 400px;
+            text-align: center;
+            font-size: 15px;
+            font-weight: 500;
+            border-left: 5px solid var(--success);
+            transition: top 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         }
-        .custom-alert-btn:hover {
-            background-color: #0056b3;
-        }
+        .toast-box.show { top: 20px; }
     </style>
 </head>
 <body>
 
+<div id="toastAlert" class="toast-box">🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อย!</div>
+
 <div class="form-container">
-    <h2>📝 ฟอร์มแจ้งปัญหาออนไลน์</h2>
+    <h2>📝 แจ้งปัญหาออนไลน์</h2>
     
     <form id="issueForm" onsubmit="submitForm(event)">
-        
         <div class="form-group">
-            <label for="category">📁 หัวข้อปัญหาที่ต้องการแจ้ง:</label>
+            <label for="category">📁 หัวข้อปัญหา:</label>
             <select id="category" onchange="toggleTargetHouse()" required>
                 <option value="" disabled selected>-- เลือกหัวข้อปัญหา --</option>
                 <option value="ปัญหาบ้าน">ปัญหาบ้าน</option>
@@ -182,18 +147,18 @@
         </div>
 
         <div class="form-group" id="targetHouseGroup" style="display: none;">
-            <label for="targetHouse">🏘️ ระบุแปลง/บ้านเลขที่คู่กรณี:</label>
+            <label for="targetHouse">🏘️ ระบุบ้านเลขที่คู่กรณี:</label>
             <input type="text" id="targetHouse" placeholder="กรอกบ้านเลขที่คู่กรณี เช่น 115">
         </div>
 
         <div class="form-group">
-            <label for="houseNumber">🏠 บ้านเลขที่ผู้แจ้งปัญหา:</label>
+            <label for="houseNumber">🏠 บ้านเลขที่ของคุณ:</label>
             <input type="text" id="houseNumber" placeholder="ตัวอย่าง: 115" required>
         </div>
 
         <div class="form-group">
-            <label for="name">👤 ชื่อผู้แจ้งปัญหา:</label>
-            <input type="text" id="name" placeholder="กรอกชื่อ-นามสกุลของคุณ" required>
+            <label for="name">👤 ชื่อผู้แจ้ง:</label>
+            <input type="text" id="name" placeholder="กรอกชื่อ-นามสกุล" required>
         </div>
 
         <div class="form-group">
@@ -208,7 +173,7 @@
 
         <div class="form-group">
             <label for="details">🔍 รายละเอียดเพิ่มเติม:</label>
-            <textarea id="details" placeholder="อธิบายรายละเอียดความเสียหาย หรือเวลาที่เกิดปัญหา..."></textarea>
+            <textarea id="details" placeholder="ระบุรายละเอียดคร่าวๆ..."></textarea>
         </div>
 
         <button type="submit" id="submitBtn">ส่งข้อมูลแจ้งปัญหา</button>
@@ -216,15 +181,9 @@
 
     <hr class="divider">
 
-    <a href="track.html" class="btn-track">🔍 ติดตามและเช็กสถานะปัญหา</a>
-
-    <a href="admin.html" class="btn-admin">🔐 สำหรับเจ้าหน้าที่ (Admin)</a>
-</div>
-
-<div id="customAlert" class="custom-alert-overlay">
-    <div class="custom-alert-box">
-        <div class="custom-alert-msg" id="customAlertMsg">🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ</div>
-        <button class="custom-alert-btn" onclick="closeCustomAlert()">ตกลง</button>
+    <div class="btn-navigation">
+        <a href="track.html" class="btn-link btn-track">🔍 เช็กสถานะ</a>
+        <a href="admin.html" class="btn-link btn-admin">🔐 เจ้าหน้าที่</a>
     </div>
 </div>
 
@@ -247,20 +206,19 @@
         }
     }
 
-    function showCustomAlert(message) {
-        document.getElementById('customAlertMsg').innerHTML = message;
-        document.getElementById('customAlert').classList.add('show');
-    }
-
-    function closeCustomAlert() {
-        document.getElementById('customAlert').classList.remove('show');
+    function triggerToast(msg) {
+        const toast = document.getElementById('toastAlert');
+        toast.innerText = msg;
+        toast.classList.add('show');
+        
         document.getElementById('issueForm').reset(); 
-        toggleTargetHouse(); 
+        toggleTargetHouse();
+
+        setTimeout(() => { toast.classList.remove('show'); }, 4000);
     }
 
     function submitForm(event) {
         event.preventDefault();
-        
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
         submitBtn.innerText = "กำลังส่งข้อมูล...";
@@ -271,29 +229,22 @@
             phone: document.getElementById('phone').value.trim(),
             category: document.getElementById('category').value,
             targetHouse: document.getElementById('targetHouse').value.trim(),
-            issue: document.getElementById('issue').value.trim(), // ✨ ซ่อมตัวแปรตรงนี้แล้วครับ
+            issue: document.getElementById('issue').value.trim(),
             details: document.getElementById('details').value.trim()
         };
 
         fetch(WEB_APP_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'text/plain;charset=utf-8'
-            },
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(formData)
         })
-        .then(() => {
-            showCustomAlert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
-        })
-        .catch(error => {
-            showCustomAlert('🎉 บันทึกข้อมูลการแจ้งปัญหาเรียบร้อยแล้วครับ เจ้าหน้าที่จะรีบตรวจสอบให้โดยเร็วที่สุดครับ');
-        })
+        .then(() => { triggerToast('🎉 บันทึกข้อมูลเรียบร้อยแล้ว'); })
+        .catch(() => { triggerToast('🎉 บันทึกข้อมูลเรียบร้อยแล้ว'); })
         .finally(() => {
             submitBtn.disabled = false;
             submitBtn.innerText = "ส่งข้อมูลแจ้งปัญหา";
         });
     }
 </script>
-
 </body>
 </html>
