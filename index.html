@@ -105,7 +105,6 @@
         .btn-track { background-color: var(--success); }
         .btn-admin { background-color: #334155; }
 
-        /* 🌟 แถบแจ้งเตือน Toast สวยว้าว ไร้ URL ไร้หัวปุ่ม */
         .toast-box {
             position: fixed;
             top: -100px;
@@ -147,13 +146,31 @@
         </div>
 
         <div class="form-group" id="targetHouseGroup" style="display: none;">
-            <label for="targetHouse">🏘️ ระบุบ้านเลขที่คู่กรณี:</label>
-            <input type="text" id="targetHouse" placeholder="กรอกบ้านเลขที่คู่กรณี เช่น 115">
+            <label for="targetHouse">🏘️ ระบุบ้านเลขที่คู่กรณี (พิมพ์ค้นหาหรือเลื่อนเลือกเลข 1-405):</label>
+            <input type="text" id="targetHouse" list="houseNumbersList" placeholder="พิมพ์ค้นหา หรือคลิกเลือก...">
         </div>
 
         <div class="form-group">
-            <label for="houseNumber">🏠 บ้านเลขที่ของคุณ:</label>
-            <input type="text" id="houseNumber" placeholder="ตัวอย่าง: 115" required>
+            <label for="houseNumber">🏠 บ้านเลขที่ของคุณ (พิมพ์ค้นหาหรือเลื่อนเลือกเลข 1-405):</label>
+            <input type="text" id="houseNumber" list="houseNumbersList" placeholder="พิมพ์ค้นหา หรือคลิกเลือก..." required>
+        </div>
+
+        <datalist id="houseNumbersList"></datalist>
+
+        <div class="form-group">
+            <label for="alley">📍 ซอยที่อยู่:</label>
+            <select id="alley" required>
+                <option value="" disabled selected>-- เลือกซอย --</option>
+                <option value="ซอย 1">ซอย 1</option>
+                <option value="ซอย 2">ซอย 2</option>
+                <option value="ซอย 3">ซอย 3</option>
+                <option value="ซอย 4">ซอย 4</option>
+                <option value="ซอย 5">ซอย 5</option>
+                <option value="ซอย 6">ซอย 6</option>
+                <option value="ซอย 7">ซอย 7</option>
+                <option value="ซอย 8">ซอย 8</option>
+                <option value="ซอย 9">ซอย 9</option>
+            </select>
         </div>
 
         <div class="form-group">
@@ -190,6 +207,16 @@
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
 
+    // 🔄 ฟังก์ชันสร้างเลข 1-405 ใส่ใน Dropdown อัตโนมัติเมื่อเปิดหน้าเว็บ
+    window.onload = function() {
+        const datalist = document.getElementById('houseNumbersList');
+        let options = '';
+        for (let i = 1; i <= 405; i++) {
+            options += `<option value="${i}"></option>`;
+        }
+        datalist.innerHTML = options;
+    };
+
     function toggleTargetHouse() {
         const category = document.getElementById('category').value;
         const targetHouseGroup = document.getElementById('targetHouseGroup');
@@ -219,12 +246,21 @@
 
     function submitForm(event) {
         event.preventDefault();
+        
+        // ตรวจสอบความถูกต้องของตัวเลข (ต้องอยู่ระหว่าง 1-405)
+        const hNum = parseInt(document.getElementById('houseNumber').value);
+        if (isNaN(hNum) || hNum < 1 || hNum > 405) {
+            alert('❌ กรุณาระบุบ้านเลขที่ให้ถูกต้อง (ระหว่างเลข 1 ถึง 405 เท่านั้น)');
+            return;
+        }
+
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
         submitBtn.innerText = "กำลังส่งข้อมูล...";
 
         const formData = {
             houseNumber: document.getElementById('houseNumber').value.trim(),
+            alley: document.getElementById('alley').value,
             name: document.getElementById('name').value.trim(),
             phone: document.getElementById('phone').value.trim(),
             category: document.getElementById('category').value,
