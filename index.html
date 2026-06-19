@@ -106,7 +106,7 @@
         .btn-track { background-color: var(--success); }
         .btn-admin { background-color: #334155; }
 
-        /* 👑 ชุดสไตล์พิเศษสำหรับ Super Search Dropdown */
+        /* สไตล์สำหรับ Super Search Dropdown */
         .super-dropdown-btn {
             background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23475569" class="bi bi-chevron-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>');
             background-repeat: no-repeat;
@@ -280,7 +280,6 @@
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
 
-    // 🔄 เริ่มต้นระบบสร้างตัวเลือกเลข 1-405 ล้วนๆ
     window.onload = function() {
         initSuperDropdown('listHouseNumber', 'houseNumber', 'menuHouseNumber', 'btnHouseNumber');
         initSuperDropdown('listTargetHouse', 'targetHouse', 'menuTargetHouse', 'btnTargetHouse');
@@ -295,33 +294,27 @@
         listEl.innerHTML = items;
     }
 
-    // เปิด-ปิด เมนู Dropdown
     function toggleMenu(menuId) {
-        // ปิดเมนูอื่นๆ ก่อนเปิดเมนูที่เลือก
         document.querySelectorAll('.super-dropdown-menu').forEach(menu => {
             if(menu.id !== menuId) menu.classList.remove('open');
         });
         document.getElementById(menuId).classList.toggle('open');
     }
 
-    // ฟังก์ชันเลือกค่าจากลิสต์
     function selectSuperValue(val, hiddenInputId, menuId, btnId) {
         document.getElementById(hiddenInputId).value = val;
-        document.getElementById(btnId).innerText = val; // เปลี่ยนคำบนปุ่มเป็นตัวเลขล้วนๆ ที่เลือก
+        document.getElementById(btnId).innerText = val;
         document.getElementById(menuId).classList.remove('open');
-        // เคลียร์ช่องค้นหาให้กลับมาโชว์ 1-405 เหมือนเดิมรอบหน้า
         const menu = document.getElementById(menuId);
         menu.querySelector('.super-search-input').value = '';
         filterOptions(menuId, '', hiddenInputId);
     }
 
-    // 🔍 ฟังก์ชัน Super Search คัดกรองตัวเลขเรียลไทม์
     function filterOptions(menuId, keyword, hiddenInputId) {
         const menu = document.getElementById(menuId);
         const items = menu.querySelectorAll('.super-option-item');
         let hasResult = false;
 
-        // ลบคอมเมนต์แจ้งว่าไม่พบข้อมูลเก่าออกก่อน
         const oldNoResult = menu.querySelector('.no-result');
         if(oldNoResult) oldNoResult.remove();
 
@@ -334,7 +327,6 @@
             }
         });
 
-        // ถ้าพิมพ์เลขมั่วแล้วไม่เจอ ให้ขึ้นเตือน
         if (!hasResult) {
             const list = menu.querySelector('.super-options-list');
             const noResultLi = document.createElement('li');
@@ -344,7 +336,6 @@
         }
     }
 
-    // คลิกนอกพื้นที่กล่องให้ปิดเมนูอัตโนมัติ
     document.addEventListener('click', function(e) {
         if (!e.target.closest('.form-group')) {
             document.querySelectorAll('.super-dropdown-menu').forEach(menu => menu.classList.remove('open'));
@@ -383,7 +374,6 @@
     function submitForm(event) {
         event.preventDefault();
         
-        // บังคับว่าต้องเลือกบ้านเลขที่ก่อนส่ง
         if (!document.getElementById('houseNumber').value) {
             alert('❌ กรุณาคลิกเลือกบ้านเลขที่ของคุณด้วยครับ');
             return;
@@ -393,15 +383,16 @@
         submitBtn.disabled = true;
         submitBtn.innerText = "กำลังส่งข้อมูล...";
 
+        // 🛠️ ลำดับการแมปตัวแปรที่แก้ไขใหม่ให้ตรงเป๊ะกับหลังบ้าน Apps Script ครับ
         const formData = {
             houseNumber: document.getElementById('houseNumber').value,
             alley: document.getElementById('alley').value,
             name: document.getElementById('name').value.trim(),
             phone: document.getElementById('phone').value.trim(),
             category: document.getElementById('category').value,
-            targetHouse: document.getElementById('targetHouse').value,
             issue: document.getElementById('issue').value.trim(),
-            details: document.getElementById('details').value.trim()
+            details: document.getElementById('details').value.trim(),
+            targetHouse: document.getElementById('targetHouse').value
         };
 
         fetch(WEB_APP_URL, {
