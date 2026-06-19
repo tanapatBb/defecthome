@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>ระบบแจ้งปัญหาโครงการเดอะโมดิช</title>
     <style>
         :root {
@@ -41,6 +41,7 @@
         }
         .form-group {
             margin-bottom: 18px;
+            position: relative;
         }
         label {
             display: block;
@@ -54,7 +55,7 @@
             padding: 12px;
             border: 1px solid #cbd5e1;
             border-radius: 8px;
-            font-size: 15px;
+            font-size: 16px; /* ปรับเป็น 16px เพื่อไม่ให้ iOS ซูมหน้าจออัตโนมัติเวลาโฟกัส */
             box-sizing: border-box;
             transition: all 0.2s;
             background-color: #fff;
@@ -105,6 +106,18 @@
         .btn-track { background-color: var(--success); }
         .btn-admin { background-color: #334155; }
 
+        /* กล่องค้นหาจำลองสำหรับช่องตัวเลือกบนมือถือ */
+        .search-select-container {
+            position: relative;
+        }
+        .search-input-box {
+            margin-bottom: 4px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%2394a3b8" class="bi bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 12px center;
+            padding-left: 36px;
+        }
+
         .toast-box {
             position: fixed;
             top: -100px;
@@ -146,16 +159,22 @@
         </div>
 
         <div class="form-group" id="targetHouseGroup" style="display: none;">
-            <label for="targetHouse">🏘️ ระบุบ้านเลขที่คู่กรณี (พิมพ์ค้นหาหรือเลื่อนเลือกเลข 1-405):</label>
-            <input type="text" id="targetHouse" list="houseNumbersList" placeholder="พิมพ์ค้นหา หรือคลิกเลือก...">
+            <label>🏘️ ระบุบ้านเลขที่คู่กรณี (1-405):</label>
+            <div class="search-select-container">
+                <input type="text" class="search-input-box" id="searchTargetHouse" placeholder="พิมพ์เลขเพื่อค้นหาคู่กรณี..." oninput="filterHouses('searchTargetHouse', 'targetHouse')">
+                <select id="targetHouse" size="5">
+                    </select>
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="houseNumber">🏠 บ้านเลขที่ของคุณ (พิมพ์ค้นหาหรือเลื่อนเลือกเลข 1-405):</label>
-            <input type="text" id="houseNumber" list="houseNumbersList" placeholder="พิมพ์ค้นหา หรือคลิกเลือก..." required>
+            <label>🏠 บ้านเลขที่ของคุณ (1-405):</label>
+            <div class="search-select-container">
+                <input type="text" class="search-input-box" id="searchHouseNumber" placeholder="พิมพ์เลขเพื่อค้นหาบ้านเลขที่..." oninput="filterHouses('searchHouseNumber', 'houseNumber')">
+                <select id="houseNumber" size="5" required>
+                    </select>
+            </div>
         </div>
-
-        <datalist id="houseNumbersList"></datalist>
 
         <div class="form-group">
             <label for="alley">📍 ซอยที่อยู่:</label>
@@ -206,30 +225,53 @@
 
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
+    
+    // เก็บรายการบ้านทั้งหมดไว้ในตัวแปรหลัก
+    const allHouses = [];
+    for (let i = 1; i <= 405; i++) { allHouses.push(i.toString()); }
 
-    // 🔄 ฟังก์ชันสร้างเลข 1-405 ใส่ใน Dropdown อัตโนมัติเมื่อเปิดหน้าเว็บ
+    // 🔄 ฟังก์ชันสร้างตัวเลือกใส่ในตารางเริ่มต้น
     window.onload = function() {
-        const datalist = document.getElementById('houseNumbersList');
-        let options = '';
-        for (let i = 1; i <= 405; i++) {
-            options += `<option value="${i}"></option>`;
-        }
-        datalist.innerHTML = options;
+        renderDropdown('houseNumber', allHouses);
+        renderDropdown('targetHouse', allHouses);
     };
+
+    function renderDropdown(selectId, list) {
+        const selectEl = document.getElementById(selectId);
+        let options = selectId === 'houseNumber' ? '<option value="" disabled selected>-- เลือกบ้านเลขที่ --</option>' : '<option value="" disabled selected>-- เลือกคู่กรณี --</option>';
+        list.forEach(num => {
+            options += `<option value="${num}">บ้านเลขที่ ${num}</option>`;
+        });
+        selectEl.innerHTML = options;
+    }
+
+    // 🔍 ระบบกรองพิมพ์ค้นหาแบบเรียลไทม์ รองรับมือถือเต็มรูปแบบ
+    function filterHouses(inputId, selectId) {
+        const query = document.getElementById(inputId).value.trim();
+        if (query === "") {
+            renderDropdown(selectId, allHouses);
+        } else {
+            const filtered = allHouses.filter(num => num.includes(query));
+            renderDropdown(selectId, filtered);
+            // แสดงลิสต์ที่กรองแล้ว
+            document.getElementById(selectId).size = Math.min(filtered.length + 1, 5); 
+        }
+    }
 
     function toggleTargetHouse() {
         const category = document.getElementById('category').value;
         const targetHouseGroup = document.getElementById('targetHouseGroup');
-        const targetHouseInput = document.getElementById('targetHouse');
+        const targetHouseSelect = document.getElementById('targetHouse');
 
         if (category === 'ร้องเรียนเพื่อนบ้าน') {
             targetHouseGroup.style.display = 'block';
-            targetHouseInput.required = true;
-            targetHouseInput.value = ''; 
+            targetHouseSelect.required = true;
+            targetHouseSelect.value = ''; 
         } else {
             targetHouseGroup.style.display = 'none';
-            targetHouseInput.required = false;
-            targetHouseInput.value = 'ไม่มี (หัวข้ออื่น)'; 
+            targetHouseSelect.required = false;
+            // สร้าง option ชั่วคราวเพื่อส่งค่า
+            targetHouseSelect.innerHTML = '<option value="ไม่มี (หัวข้ออื่น)" selected>ไม่มี (หัวข้ออื่น)</option>';
         }
     }
 
@@ -239,6 +281,10 @@
         toast.classList.add('show');
         
         document.getElementById('issueForm').reset(); 
+        document.getElementById('searchHouseNumber').value = '';
+        document.getElementById('searchTargetHouse').value = '';
+        renderDropdown('houseNumber', allHouses);
+        renderDropdown('targetHouse', allHouses);
         toggleTargetHouse();
 
         setTimeout(() => { toast.classList.remove('show'); }, 4000);
@@ -247,10 +293,9 @@
     function submitForm(event) {
         event.preventDefault();
         
-        // ตรวจสอบความถูกต้องของตัวเลข (ต้องอยู่ระหว่าง 1-405)
-        const hNum = parseInt(document.getElementById('houseNumber').value);
-        if (isNaN(hNum) || hNum < 1 || hNum > 405) {
-            alert('❌ กรุณาระบุบ้านเลขที่ให้ถูกต้อง (ระหว่างเลข 1 ถึง 405 เท่านั้น)');
+        const houseValue = document.getElementById('houseNumber').value;
+        if (!houseValue) {
+            alert('❌ กรุณาคลิกเลือกตัวเลือกบ้านเลขที่ของคุณในตารางด้านล่างกล่องค้นหาด้วยครับ');
             return;
         }
 
@@ -259,12 +304,12 @@
         submitBtn.innerText = "กำลังส่งข้อมูล...";
 
         const formData = {
-            houseNumber: document.getElementById('houseNumber').value.trim(),
+            houseNumber: houseValue,
             alley: document.getElementById('alley').value,
             name: document.getElementById('name').value.trim(),
             phone: document.getElementById('phone').value.trim(),
             category: document.getElementById('category').value,
-            targetHouse: document.getElementById('targetHouse').value.trim(),
+            targetHouse: document.getElementById('targetHouse').value,
             issue: document.getElementById('issue').value.trim(),
             details: document.getElementById('details').value.trim()
         };
