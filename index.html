@@ -41,6 +41,7 @@
         }
         .form-group {
             margin-bottom: 18px;
+            position: relative;
         }
         label {
             display: block;
@@ -54,7 +55,7 @@
             padding: 12px;
             border: 1px solid #cbd5e1;
             border-radius: 8px;
-            font-size: 16px; /* ใช้ 16px เพื่อไม่ให้จอมือถือซูมเองเวลาเปิด dropdown */
+            font-size: 16px;
             box-sizing: border-box;
             transition: all 0.2s;
             background-color: #fff;
@@ -105,7 +106,68 @@
         .btn-track { background-color: var(--success); }
         .btn-admin { background-color: #334155; }
 
-        /* แถบแจ้งเตือน Toast */
+        /* 👑 ชุดสไตล์พิเศษสำหรับ Super Search Dropdown */
+        .super-dropdown-btn {
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="%23475569" class="bi bi-chevron-down" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: calc(100% - 14px) center;
+            background-size: 14px;
+            cursor: pointer;
+            text-align: left;
+            user-select: none;
+        }
+        .super-dropdown-menu {
+            display: none;
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: white;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            margin-top: 4px;
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            z-index: 1000;
+            padding: 6px;
+        }
+        .super-dropdown-menu.open {
+            display: block;
+        }
+        .super-search-input {
+            padding: 10px 10px 10px 32px;
+            font-size: 15px;
+            margin-bottom: 6px;
+            border-radius: 6px;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="%2394a3b8" class="bi bi-search" viewBox="0 0 16 16"><path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: 10px center;
+        }
+        .super-options-list {
+            max-height: 180px;
+            overflow-y: auto;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+        .super-option-item {
+            padding: 10px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 15px;
+            color: var(--text);
+        }
+        .super-option-item:hover {
+            background-color: #f1f5f9;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .super-option-item.no-result {
+            color: #94a3b8;
+            text-align: center;
+            cursor: default;
+        }
+        .super-option-item.no-result:hover { background: none; color: #94a3b8; font-weight: normal; }
+
         .toast-box {
             position: fixed;
             top: -100px;
@@ -147,15 +209,25 @@
         </div>
 
         <div class="form-group" id="targetHouseGroup" style="display: none;">
-            <label for="targetHouse">🏘️ ระบุบ้านเลขที่คู่กรณี:</label>
-            <select id="targetHouse">
-                </select>
+            <label>🏘️ ระบุบ้านเลขที่คู่กรณี:</label>
+            <div id="btnTargetHouse" class="super-dropdown-btn" onclick="toggleMenu('menuTargetHouse')">-- เลือกคู่กรณี --</div>
+            <input type="hidden" id="targetHouse" value="">
+            
+            <div id="menuTargetHouse" class="super-dropdown-menu">
+                <input type="text" class="super-search-input" placeholder="พิมพ์เลขค้นหาคู่กรณี..." oninput="filterOptions('menuTargetHouse', this.value, 'targetHouse')">
+                <ul class="super-options-list" id="listTargetHouse"></ul>
+            </div>
         </div>
 
         <div class="form-group">
-            <label for="houseNumber">🏠 บ้านเลขที่ของคุณ:</label>
-            <select id="houseNumber" required>
-                </select>
+            <label>🏠 บ้านเลขที่ของคุณ:</label>
+            <div id="btnHouseNumber" class="super-dropdown-btn" onclick="toggleMenu('menuHouseNumber')">-- เลือกบ้านเลขที่ --</div>
+            <input type="hidden" id="houseNumber" value="" required>
+            
+            <div id="menuHouseNumber" class="super-dropdown-menu">
+                <input type="text" class="super-search-input" placeholder="พิมพ์เลขค้นหาบ้านเลขที่..." oninput="filterOptions('menuHouseNumber', this.value, 'houseNumber')">
+                <ul class="super-options-list" id="listHouseNumber"></ul>
+            </div>
         </div>
 
         <div class="form-group">
@@ -208,36 +280,90 @@
 <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzNMDCh-SilFr9avDYLzKbfk2OIXgYJCYKeJ9bd2nEZfcr5xvPVuaBVFlOQ87xn05kA/exec";
 
-    // 🔄 ฟังก์ชันสร้างตัวเลือกเลข 1-405 แบบตัวเลขล้วนๆ เมื่อเปิดหน้าเว็บ
+    // 🔄 เริ่มต้นระบบสร้างตัวเลือกเลข 1-405 ล้วนๆ
     window.onload = function() {
-        generateHouseOptions('houseNumber', '-- เลือกบ้านเลขที่ --');
-        generateHouseOptions('targetHouse', '-- เลือกคู่กรณี --');
+        initSuperDropdown('listHouseNumber', 'houseNumber', 'menuHouseNumber', 'btnHouseNumber');
+        initSuperDropdown('listTargetHouse', 'targetHouse', 'menuTargetHouse', 'btnTargetHouse');
     };
 
-    function generateHouseOptions(selectId, defaultText) {
-        const selectEl = document.getElementById(selectId);
-        let options = `<option value="" disabled selected>${defaultText}</option>`;
+    function initSuperDropdown(listId, hiddenInputId, menuId, btnId) {
+        const listEl = document.getElementById(listId);
+        let items = '';
         for (let i = 1; i <= 405; i++) {
-            options += `<option value="${i}">${i}</option>`; // เอาคำว่าบ้านเลขที่ออก เหลือแค่ตัวเลขล้วนๆตามคำขอ
+            items += `<li class="super-option-item" onclick="selectSuperValue('${i}', '${hiddenInputId}', '${menuId}', '${btnId}')">${i}</li>`;
         }
-        selectEl.innerHTML = options;
+        listEl.innerHTML = items;
     }
+
+    // เปิด-ปิด เมนู Dropdown
+    function toggleMenu(menuId) {
+        // ปิดเมนูอื่นๆ ก่อนเปิดเมนูที่เลือก
+        document.querySelectorAll('.super-dropdown-menu').forEach(menu => {
+            if(menu.id !== menuId) menu.classList.remove('open');
+        });
+        document.getElementById(menuId).classList.toggle('open');
+    }
+
+    // ฟังก์ชันเลือกค่าจากลิสต์
+    function selectSuperValue(val, hiddenInputId, menuId, btnId) {
+        document.getElementById(hiddenInputId).value = val;
+        document.getElementById(btnId).innerText = val; // เปลี่ยนคำบนปุ่มเป็นตัวเลขล้วนๆ ที่เลือก
+        document.getElementById(menuId).classList.remove('open');
+        // เคลียร์ช่องค้นหาให้กลับมาโชว์ 1-405 เหมือนเดิมรอบหน้า
+        const menu = document.getElementById(menuId);
+        menu.querySelector('.super-search-input').value = '';
+        filterOptions(menuId, '', hiddenInputId);
+    }
+
+    // 🔍 ฟังก์ชัน Super Search คัดกรองตัวเลขเรียลไทม์
+    function filterOptions(menuId, keyword, hiddenInputId) {
+        const menu = document.getElementById(menuId);
+        const items = menu.querySelectorAll('.super-option-item');
+        let hasResult = false;
+
+        // ลบคอมเมนต์แจ้งว่าไม่พบข้อมูลเก่าออกก่อน
+        const oldNoResult = menu.querySelector('.no-result');
+        if(oldNoResult) oldNoResult.remove();
+
+        items.forEach(item => {
+            if (item.innerText.includes(keyword.trim())) {
+                item.style.display = 'block';
+                hasResult = true;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // ถ้าพิมพ์เลขมั่วแล้วไม่เจอ ให้ขึ้นเตือน
+        if (!hasResult) {
+            const list = menu.querySelector('.super-options-list');
+            const noResultLi = document.createElement('li');
+            noResultLi.className = 'super-option-item no-result';
+            noResultLi.innerText = '❌ ไม่พบเลขคู่นี้ (1-405)';
+            list.appendChild(noResultLi);
+        }
+    }
+
+    // คลิกนอกพื้นที่กล่องให้ปิดเมนูอัตโนมัติ
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.form-group')) {
+            document.querySelectorAll('.super-dropdown-menu').forEach(menu => menu.classList.remove('open'));
+        }
+    });
 
     function toggleTargetHouse() {
         const category = document.getElementById('category').value;
         const targetHouseGroup = document.getElementById('targetHouseGroup');
-        const targetHouseSelect = document.getElementById('targetHouse');
+        const targetHouseInput = document.getElementById('targetHouse');
+        const btnTargetHouse = document.getElementById('btnTargetHouse');
 
         if (category === 'ร้องเรียนเพื่อนบ้าน') {
             targetHouseGroup.style.display = 'block';
-            targetHouseSelect.required = true;
-            // รีเซ็ตค่าให้เลือกใหม่
-            generateHouseOptions('targetHouse', '-- เลือกคู่กรณี --');
+            targetHouseInput.value = ''; 
+            btnTargetHouse.innerText = '-- เลือกคู่กรณี --';
         } else {
             targetHouseGroup.style.display = 'none';
-            targetHouseSelect.required = false;
-            // ใส่ค่าล็อกไว้เพื่อส่งไปหลังบ้านกรณีเป็นหัวข้ออื่น
-            targetHouseSelect.innerHTML = '<option value="ไม่มี (หัวข้ออื่น)" selected>ไม่มี (หัวข้ออื่น)</option>';
+            targetHouseInput.value = 'ไม่มี (หัวข้ออื่น)'; 
         }
     }
 
@@ -247,7 +373,8 @@
         toast.classList.add('show');
         
         document.getElementById('issueForm').reset(); 
-        generateHouseOptions('houseNumber', '-- เลือกบ้านเลขที่ --');
+        document.getElementById('houseNumber').value = '';
+        document.getElementById('btnHouseNumber').innerText = '-- เลือกบ้านเลขที่ --';
         toggleTargetHouse();
 
         setTimeout(() => { toast.classList.remove('show'); }, 4000);
@@ -255,6 +382,13 @@
 
     function submitForm(event) {
         event.preventDefault();
+        
+        // บังคับว่าต้องเลือกบ้านเลขที่ก่อนส่ง
+        if (!document.getElementById('houseNumber').value) {
+            alert('❌ กรุณาคลิกเลือกบ้านเลขที่ของคุณด้วยครับ');
+            return;
+        }
+
         const submitBtn = document.getElementById('submitBtn');
         submitBtn.disabled = true;
         submitBtn.innerText = "กำลังส่งข้อมูล...";
